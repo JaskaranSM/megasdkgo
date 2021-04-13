@@ -20,7 +20,7 @@ std::vector<MegaDownload*> AllDls;
 bool isMegaFolder(const char* link)
 {
     std::string mlink = link;
-    return mlink.find("folder") != std::string::npos;
+    return mlink.find("folder") != std::string::npos || mlink.find("#F!") != std::string::npos;
 }
 
 const char* gen_random(const int len) 
@@ -119,15 +119,10 @@ public:
             req_listener->wait();
             req_listener->reset();
         }
-        if(req_listener->err != NULL && !req_listener->isKeyFound)
+        if( req_listener->err != NULL && req_listener->err->getErrorCode() != mega::MegaError::API_OK)
         {
-            resp->errorCode = 69;
-            resp->errorString = "bad key"; 
-            if(req_listener->err->getErrorCode() != mega::MegaError::API_OK)
-            {
-                resp->errorCode = req_listener->err->getErrorCode();
-                resp->errorString = req_listener->err->getErrorString();
-            }
+            resp->errorCode = req_listener->err->getErrorCode();
+            resp->errorString = req_listener->err->getErrorString();
             return resp;
         }
         const char* fname = req_listener->public_node->getName();
@@ -135,6 +130,8 @@ public:
         fpath += "/";
         fpath += fname;
         transfer_listener->gid = gid;
+        transfer_listener->totalbytes = api->getSize(req_listener->public_node);
+        transfer_listener->state = mega::MegaTransfer::STATE_QUEUED;
         MegaDownload* dl = new MegaDownload(req_listener->public_node->getName(),transfer_listener,gid);
         api->startDownload(req_listener->public_node,fpath.c_str(),transfer_listener);
         moveDownloadToActive(gid,dl);
@@ -145,7 +142,7 @@ public:
 
 MegaDownloader *downloader;
 
-int init(const char* API_KEY){
+int initmega(const char* API_KEY){
     std::cout << "Initiliazing Library with API_KEY: "  << API_KEY << std::endl;
     api = new mega::MegaApi(API_KEY, (const char*)NULL, "Mega CLI Client");
     MegaDownloader* downloader = new MegaDownloader();
@@ -183,6 +180,7 @@ struct DownloadInfo* getDownloadByGid(const char* gid)
     di->speed = dl->GetSpeed();
     di->errorCode = dl->listener->errorCode;
     di->state = dl->listener->state;
+    di->errorString = dl->listener->errorString;
     di->totalLength = dl->GetTotalBytes();
     return di;
 }

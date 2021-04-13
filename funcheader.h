@@ -9,12 +9,13 @@ extern "C" {
 struct DownloadInfo
 {
     const char *name;
-    int completedLength;
-    int totalLength;
-    int speed;
+    int64_t completedLength;
+    int64_t totalLength;
+    int64_t speed;
     int state;
     const char *gid;
     int errorCode;
+    const char* errorString;
 };
 
 struct AddDownloadResp
@@ -30,7 +31,7 @@ struct LoginResp
     const char* errorString;
 
 };
-int init(const char* API_KEY);
+int initmega(const char* API_KEY);
 struct LoginResp* login(const char* email, const char* password);
 struct AddDownloadResp* addDownload(const char* link,const char* dir);
 int cancelDownload(const char* gid);

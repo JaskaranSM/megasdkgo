@@ -1,10 +1,5 @@
 #include "include/megaapi.h"
-
-int stateDownloading = 0;
-int stateFailed = 1;
-int stateCompleted = 2;
-int stateCanceled = 3;
-
+#include <cstdint>
 
 class MegaAppRequestListener : public mega::MegaRequestListener 
 {
@@ -104,12 +99,13 @@ private:
     std::mutex m;
     bool notified;
 public:
-    int transferredbytes = 0;
-    int totalbytes = 0;
-    int speed = 0;
+    int64_t transferredbytes = 0;
+    int64_t totalbytes = 0;
+    int64_t speed = 0;
     int state = 0;
     std::string gid;
     int errorCode = 0;
+    const char* errorString;
     bool is_complete = false;
     bool is_canceled = false;
     bool is_active = false;
@@ -125,7 +121,7 @@ public:
     }
     void onTransferStart(mega::MegaApi *api, mega::MegaTransfer *transfer)
     {
-        this->state = stateDownloading;
+        this->state = transfer->getState();
         this->is_active = true;
         this->this_transfer = transfer->copy();
         doEventCallback(this->state);
@@ -136,10 +132,9 @@ public:
         if(e->getErrorCode() != mega::MegaError::API_OK)
         {
             this->errorCode = e->getErrorCode();
-            this->state = stateFailed;
-        } else {
-            this->state = stateCompleted;
-        }
+            this->errorString = e->getErrorString();
+        } 
+        this->state = transfer->getState();
         {
 			std::unique_lock<std::mutex> lock(m);
 			notified = true;
@@ -166,12 +161,14 @@ public:
         if(this->is_canceled && this->is_active)
         {
             this->is_active = false;
-            this->state = stateCanceled;
             api->cancelTransfer(this->this_transfer);
+            this->state = transfer->getState();
         }
         speed = transfer->getSpeed();
         transferredbytes = transfer->getTransferredBytes();
-        totalbytes = transfer->getTotalBytes();
+        if(this->state != mega::MegaTransfer::STATE_CANCELLED) {
+            this->state = transfer->getState();
+        }
     }
 
     void reset()
@@ -188,6 +185,7 @@ public:
     void CancelTransfer()
     {
         this->is_canceled = true;
+        this->state = mega::MegaTransfer::STATE_CANCELLED;
     }
 
 };
@@ -229,17 +227,17 @@ public:
     {
         return this->name.c_str();
     }
-    int GetTransferredBytes()
+    int64_t GetTransferredBytes()
     {
         return this->listener->transferredbytes;
     }
 
-    int GetTotalBytes()
+    int64_t GetTotalBytes()
     {
         return this->listener->totalbytes;
     }
 
-    int GetSpeed()
+    int64_t GetSpeed()
     {
         return this->listener->speed;
     }
