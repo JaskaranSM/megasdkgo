@@ -15,6 +15,7 @@
 #include "include/megaapi.h"
 
 mega::MegaApi* api;
+const char* api_key;
 std::vector<MegaDownload*> AllDls;
 
 bool isMegaFolder(const char* link)
@@ -111,9 +112,17 @@ public:
         MegaAppTransferListener* transfer_listener = new MegaAppTransferListener();
         if(isMegaFolder(link))
         {
-            api->loginToFolder(link,req_listener);
+            mega::MegaApi* folder_api = new mega::MegaApi(api_key, (const char*)NULL, "Mega FolderApi temp Client");
+            folder_api->loginToFolder(link,req_listener);
             req_listener->wait();
             req_listener->reset();
+            if( req_listener->err != NULL && req_listener->err->getErrorCode() != mega::MegaError::API_OK)
+            {
+                resp->errorCode = req_listener->err->getErrorCode();
+                resp->errorString = req_listener->err->getErrorString();
+                return resp;
+            }
+            req_listener->public_node = folder_api->authorizeNode(req_listener->public_node);
         } else {
             api->getPublicNode(link,req_listener);
             req_listener->wait();
@@ -144,6 +153,7 @@ MegaDownloader *downloader;
 
 int initmega(const char* API_KEY){
     std::cout << "Initiliazing Library with API_KEY: "  << API_KEY << std::endl;
+    api_key = API_KEY;
     api = new mega::MegaApi(API_KEY, (const char*)NULL, "Mega CLI Client");
     MegaDownloader* downloader = new MegaDownloader();
     downloader->SetEventCallback(genericCallback);

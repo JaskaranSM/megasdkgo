@@ -42,7 +42,6 @@ public:
                     break;
                 case mega::MegaRequest::TYPE_FETCH_NODES:
                     this->public_node = api->getRootNode()->copy();
-                    this->public_node = api->authorizeNode(this->public_node);
                     equal = strcmp(this->public_node->getBase64Key(), "");
                     if(equal == 0 && this->public_node->isForeign()) 
                     {
