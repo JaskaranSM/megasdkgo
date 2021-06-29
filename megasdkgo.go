@@ -3,7 +3,7 @@ package megasdkgo
 /*
  #cgo CXXFLAGS: -std=c++11 -fpermissive
  #cgo LDFLAGS: -L./.libs
- #cgo LDFLAGS: -lmega -lsqlite3 -lpthread -lcryptopp -lcurl -lssl -lcrypto -lcares -lsodium -lrt
+ #cgo LDFLAGS: -lmega -lsqlite3 -lpthread -lcryptopp -lcurl -lssl -lcrypto -lcares -lsodium -lrt -lz
  #include <stdlib.h>
  #include "funcheader.h"
 */

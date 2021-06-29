@@ -7,6 +7,9 @@
 #include <map>
 #include <unistd.h>
 
+#include <string.h>
+#include <stdio.h>
+
 #include <condition_variable>
 #include "megaheader.h"
 #include "funcheader.h"
