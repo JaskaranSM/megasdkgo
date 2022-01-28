@@ -1,5 +1,7 @@
 #include "include/megaapi.h"
 #include <cstdint>
+#include <string.h>
+#include <stdio.h>
 
 class MegaAppRequestListener : public mega::MegaRequestListener 
 {
